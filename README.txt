@@ -1,4 +1,4 @@
-mesecar 0.1.0 by paramat, a fork of Dan Duncombe's car mod
-For latest stable Minetest and back to 0.4.7
-Depends default
+mesecar 0.2.0 by paramat
+For latest stable Minetest and back to 0.4.9
+Depends default wool dye
 Licenses: code WTFPL, textures CC BY-SA

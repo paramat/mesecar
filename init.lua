@@ -1,9 +1,18 @@
--- mesecar 0.1.0 by paramat, a fork of Dan Duncombe's car mod
--- For latest stable Minetest and back to 0.4.7
--- Depends default
+-- mesecar 0.2.0 by paramat, a fork of Dan Duncombe's car mod
+-- For latest stable Minetest and back to 0.4.9
+-- Depends default wool dye
 -- Licenses: code WTFPL, textures CC-BY-SA
 
-local TURNS = 0.04 -- 0.04 -- Maximum turn speed.
+-- new in 0.2.0:
+-- added step height and max speed parameters
+-- bugfix floating above slabs
+-- resize car, collisionbox
+-- new texture
+-- update crafting
+
+local MAXSP = 8 -- Maxspeed in nodes per second
+local TURNSP = 0.04 -- Maximum turn speed
+local STEPH = 0.6 -- Stepheight, 0.6 = climb slabs, 1.1 = climb nodes
 
 -- Functions
 
@@ -22,28 +31,28 @@ end
 local function get_velocity(v, yaw, y)
 	local x = math.cos(yaw) * v
 	local z = math.sin(yaw) * v
-	return {x=x,y=y,z=z}
+	return {x=x, y=y, z=z}
 end
 
 local function get_v(v)
 	return math.sqrt(v.x ^ 2 + v.z ^ 2)
 end
 
--- Cart entity
+-- Car entity
 
-local boat = {
+local car = {
 	physical = true,
-	collisionbox = {-0.6,0.75,-0.6, 0.6,0.75,0.6},
+	collisionbox = {-0.55, 0, -0.55, 0.55, 1.45, 0.55},
 	visual = "mesh",
-	visual_size = {x=1,y=1.6},
+	visual_size = {x=0.9, y=1.3},
 	mesh = "mesecar.x",
 	textures = {"mesecar_mesecar.png"},
-	
+	stepheight = STEPH,
 	driver = nil,
 	v = 0,
 }
 
-function boat:on_rightclick(clicker)
+function car:on_rightclick(clicker)
 	if not clicker or not clicker:is_player() then
 		return
 	end
@@ -52,23 +61,23 @@ function boat:on_rightclick(clicker)
 		clicker:set_detach()
 	elseif not self.driver then
 		self.driver = clicker
-		clicker:set_attach(self.object, "", {x=0,y=5,z=0}, {x=0,y=0,z=0})
+		clicker:set_attach(self.object, "", {x=0, y=5, z=0}, {x=0, y=0, z=0})
 		self.object:setyaw(clicker:get_look_yaw())
 	end
 end
 
-function boat:on_activate(staticdata, dtime_s)
+function car:on_activate(staticdata, dtime_s)
 	self.object:set_armor_groups({immortal=1})
 	if staticdata then
 		self.v = tonumber(staticdata)
 	end
 end
 
-function boat:get_staticdata()
+function car:get_staticdata()
 	return tostring(v)
 end
 
-function boat:on_punch(puncher, time_from_last_punch, tool_capabilities, direction)
+function car:on_punch(puncher, time_from_last_punch, tool_capabilities, direction)
 	self.object:remove()
 	if puncher and puncher:is_player() then
 		puncher:get_inventory():add_item("main", "mesecar:mesecar")
@@ -77,7 +86,7 @@ end
 
 -- On globalstep
 
-function boat:on_step(dtime)
+function car:on_step(dtime)
 	self.v = get_v(self.object:getvelocity()) * get_sign(self.v)
 	local absv = math.abs(self.v)
 	if self.driver then
@@ -88,7 +97,7 @@ function boat:on_step(dtime)
 			self.v = self.v - 0.3
 		end
 		local turn
-		local maxturn = (1 + dtime) * TURNS
+		local maxturn = (1 + dtime) * TURNSP
 		if absv < 4 then
 			turn = maxturn * absv / 4
 		else
@@ -101,44 +110,27 @@ function boat:on_step(dtime)
 		end
 	end
 	local s = get_sign(self.v)
-	self.v = self.v - 0.02 * s -- decceleration
-	if s ~= get_sign(self.v) then -- if decceleration reverses direction
-		self.object:setvelocity({x=0,y=0,z=0}) -- stop
+	self.v = self.v - 0.02 * s
+	if s ~= get_sign(self.v) then
+		self.object:setvelocity({x=0, y=0, z=0})
 		self.v = 0
 		return
 	end
-	if absv > 8 then
-		self.v = 8 * get_sign(self.v) -- limit speed to ~20mph
+	if absv > MAXSP then
+		self.v = MAXSP * get_sign(self.v)
 	end
-	local p = self.object:getpos()
-	p.y = p.y - 0.5
-	if not is_ground(p) then
-		self.object:setacceleration({x=0,y=-9.81,z=0})
-		self.object:setvelocity(get_velocity(self.v, self.object:getyaw(), self.object:getvelocity().y))
-	else
-		p.y = p.y + 1
-		if is_ground(p) then
-			self.object:setacceleration({x=0,y=0,z=0})
-			self.object:setvelocity(get_velocity(self.v, self.object:getyaw(), 0))
-			local pos = self.object:getpos()
-			pos.y = math.floor(pos.y) + 1.5
-			self.object:setpos(pos)
-		else
-			self.object:setacceleration({x=0,y=0,z=0})
-			self.object:setvelocity(get_velocity(self.v, self.object:getyaw(), 0))
-			local pos = self.object:getpos()
-			pos.y = math.floor(pos.y) + 0.5
-			self.object:setpos(pos)
-		end
-	end
+	self.object:setacceleration({x=0, y=-9.81, z=0})
+	self.object:setvelocity(get_velocity(self.v, self.object:getyaw(), self.object:getvelocity().y))
+	self.object:setpos(self.object:getpos())
 end
 
-minetest.register_entity("mesecar:mesecar", boat)
+minetest.register_entity("mesecar:mesecar", car)
+
+-- Items
 
 minetest.register_craftitem("mesecar:mesecar", {
 	description = "Mese Car",
 	inventory_image = "mesecar_mesecar.png",
-	wield_scale = {x=2,y=2,z=1},
 	liquids_pointable = true,
 	groups = {not_in_creative_inventory=1},
 	on_place = function(itemstack, placer, pointed_thing)
@@ -148,7 +140,7 @@ minetest.register_craftitem("mesecar:mesecar", {
 		if not is_ground(pointed_thing.under) then
 			return
 		end
-		pointed_thing.under.y = pointed_thing.under.y + 2
+		pointed_thing.under.y = pointed_thing.under.y + 1
 		minetest.add_entity(pointed_thing.under, "mesecar:mesecar")
 		itemstack:take_item()
 		return itemstack
@@ -167,6 +159,8 @@ minetest.register_craftitem("mesecar:battery", {
 	groups = {not_in_creative_inventory=1},
 })
 
+-- Crafting
+
 minetest.register_craft({
 	output = "mesecar:motor",
 	recipe = {
@@ -181,14 +175,14 @@ minetest.register_craft({
 	recipe = {
 		{"default:steel_ingot", "default:steel_ingot", "default:steel_ingot"},
 		{"default:steel_ingot", "default:mese_block", "default:copper_ingot"},
-		{"default:copper_ingot", "default:steel_ingot", "default:steel_ingot"},
+		{"default:steel_ingot", "default:steel_ingot", "default:steel_ingot"},
 	},
 })
 
 minetest.register_craft({
 	output = "mesecar:mesecar",
 	recipe = {
-		{"wool:black", "wool:orange", "default:glass"},
+		{"dye:yellow", "wool:black", "default:glass"},
 		{"mesecar:battery", "default:copper_ingot", "mesecar:motor"},
 		{"default:steelblock", "default:steelblock", "default:steelblock"},
 	},
