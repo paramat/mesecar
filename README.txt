@@ -1,4 +1,4 @@
-mesecar 0.2.0 by paramat
-For latest stable Minetest and back to 0.4.9
-Depends default wool dye
+mesecar 0.3.0 by paramat
+For latest stable Minetest and back to 0.4.10
+Depends default
 Licenses: code WTFPL, textures CC BY-SA

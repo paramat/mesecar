@@ -1,14 +1,10 @@
--- mesecar 0.2.0 by paramat, a fork of Dan Duncombe's car mod
--- For latest stable Minetest and back to 0.4.9
--- Depends default wool dye
+-- mesecar 0.3.0 by paramat
+-- For latest stable Minetest and back to 0.4.10
+-- Depends default
 -- Licenses: code WTFPL, textures CC-BY-SA
 
--- new in 0.2.0:
--- added step height and max speed parameters
--- bugfix floating above slabs
--- resize car, collisionbox
--- new texture
--- update crafting
+-- update code to current boats mod
+-- new cubic microcar
 
 local MAXSP = 8 -- Maxspeed in nodes per second
 local TURNSP = 0.04 -- Maximum turn speed
@@ -29,8 +25,8 @@ local function get_sign(i)
 end
 
 local function get_velocity(v, yaw, y)
-	local x = math.cos(yaw) * v
-	local z = math.sin(yaw) * v
+	local x = -math.sin(yaw) * v
+	local z =  math.cos(yaw) * v
 	return {x=x, y=y, z=z}
 end
 
@@ -42,44 +38,71 @@ end
 
 local car = {
 	physical = true,
-	collisionbox = {-0.55, 0, -0.55, 0.55, 1.45, 0.55},
-	visual = "mesh",
-	visual_size = {x=0.9, y=1.3},
-	mesh = "mesecar.x",
-	textures = {"mesecar_mesecar.png"},
+	collide_with_objects = true,
+	collisionbox = {-0.55, -0.5, -0.55, 0.55, 0.5, 0.55},
+	visual = "cube",
+	visual_size = {x=1, y=1},
+	textures = { -- top base side side front back
+		"mesecar_cartop.png",
+		"mesecar_carbase.png",
+		"mesecar_carside.png",
+		"mesecar_carside.png",
+		"mesecar_carfront.png",
+		"mesecar_carback.png",
+	},
 	stepheight = STEPH,
 	driver = nil,
 	v = 0,
+	last_v = 0,
+	removed = false,
 }
 
 function car:on_rightclick(clicker)
 	if not clicker or not clicker:is_player() then
 		return
 	end
+	local name = clicker:get_player_name()
 	if self.driver and clicker == self.driver then
 		self.driver = nil
 		clicker:set_detach()
+		default.player_attached[name] = false
+		default.player_set_animation(clicker, "stand" , 30)
 	elseif not self.driver then
 		self.driver = clicker
-		clicker:set_attach(self.object, "", {x=0, y=5, z=0}, {x=0, y=0, z=0})
-		self.object:setyaw(clicker:get_look_yaw())
+		clicker:set_attach(self.object, "", {x = 0, y = 11, z = -3}, {x = 0, y = 0, z = 0})
+		default.player_attached[name] = true
+		minetest.after(0.2, function()
+			default.player_set_animation(clicker, "sit" , 30)
+		end)
+		self.object:setyaw(clicker:get_look_yaw() - math.pi / 2)
 	end
 end
 
-function car:on_activate(staticdata, dtime_s)
-	self.object:set_armor_groups({immortal=1})
+function car.on_activate(self, staticdata, dtime_s)
+	self.object:set_armor_groups({immortal = 1})
 	if staticdata then
 		self.v = tonumber(staticdata)
 	end
+	self.last_v = self.v
 end
 
-function car:get_staticdata()
-	return tostring(v)
+function car.get_staticdata(self)
+	return tostring(self.v)
 end
 
-function car:on_punch(puncher, time_from_last_punch, tool_capabilities, direction)
-	self.object:remove()
-	if puncher and puncher:is_player() then
+function car.on_punch(self, puncher, time_from_last_punch, tool_capabilities, direction)
+	if not puncher or not puncher:is_player() or self.removed then
+		return
+	end
+	puncher:set_detach()
+	default.player_attached[puncher:get_player_name()] = false
+
+	self.removed = true
+	-- delay remove to ensure player is detached
+	minetest.after(0.1, function()
+		self.object:remove()
+	end)
+	if not minetest.setting_getbool("creative_mode") then
 		puncher:get_inventory():add_item("main", "mesecar:mesecar")
 	end
 end
@@ -109,6 +132,10 @@ function car:on_step(dtime)
 			self.object:setyaw(self.object:getyaw() - turn)
 		end
 	end
+	local velo = self.object:getvelocity()
+	if self.v == 0 and velo.x == 0 and velo.y == 0 and velo.z == 0 then
+		return
+	end
 	local s = get_sign(self.v)
 	self.v = self.v - 0.02 * s
 	if s ~= get_sign(self.v) then
@@ -130,9 +157,10 @@ minetest.register_entity("mesecar:mesecar", car)
 
 minetest.register_craftitem("mesecar:mesecar", {
 	description = "Mese Car",
-	inventory_image = "mesecar_mesecar.png",
+	inventory_image = "mesecar_carfront.png",
+	wield_image = "mesecar_carfront.png",
+	wield_scale = {x = 2, y = 2, z = 2},
 	liquids_pointable = true,
-	groups = {not_in_creative_inventory=1},
 	on_place = function(itemstack, placer, pointed_thing)
 		if pointed_thing.type ~= "node" then
 			return
@@ -140,50 +168,12 @@ minetest.register_craftitem("mesecar:mesecar", {
 		if not is_ground(pointed_thing.under) then
 			return
 		end
-		pointed_thing.under.y = pointed_thing.under.y + 1
+		pointed_thing.under.y = pointed_thing.under.y + 2
 		minetest.add_entity(pointed_thing.under, "mesecar:mesecar")
-		itemstack:take_item()
+		if not minetest.setting_getbool("creative_mode") then
+			itemstack:take_item()
+		end
 		return itemstack
 	end,
 })
 
-minetest.register_craftitem("mesecar:motor", {
-	description = "Mese Motor",
-	inventory_image = "mesecar_motor.png",
-	groups = {not_in_creative_inventory=1},
-})
-
-minetest.register_craftitem("mesecar:battery", {
-	description = "Mese Battery",
-	inventory_image = "mesecar_battery.png",
-	groups = {not_in_creative_inventory=1},
-})
-
--- Crafting
-
-minetest.register_craft({
-	output = "mesecar:motor",
-	recipe = {
-		{"default:steel_ingot", "default:copper_ingot", "default:steel_ingot"},
-		{"default:copper_ingot", "default:steel_ingot", "default:copper_ingot"},
-		{"default:steel_ingot", "default:copper_ingot", "default:steel_ingot"},
-	},
-})
-
-minetest.register_craft({
-	output = "mesecar:battery",
-	recipe = {
-		{"default:steel_ingot", "default:steel_ingot", "default:steel_ingot"},
-		{"default:steel_ingot", "default:mese_block", "default:copper_ingot"},
-		{"default:steel_ingot", "default:steel_ingot", "default:steel_ingot"},
-	},
-})
-
-minetest.register_craft({
-	output = "mesecar:mesecar",
-	recipe = {
-		{"dye:yellow", "wool:black", "default:glass"},
-		{"mesecar:battery", "default:copper_ingot", "mesecar:motor"},
-		{"default:steelblock", "default:steelblock", "default:steelblock"},
-	},
-})
