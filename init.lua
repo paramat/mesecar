@@ -1,12 +1,16 @@
--- mesecar 0.3.0 by paramat
+-- mesecar 0.3.1 by paramat
 -- For latest stable Minetest and back to 0.4.10
 -- Depends default
 -- Licenses: code WTFPL, textures CC-BY-SA
 
--- update code to current boats mod
--- new cubic microcar
+-- Fix texture sizes, edit textures
+-- Tune player attach position
+-- Fix on-place postion
+-- Reduce turn at high speeds
+-- Acceleration parameter
 
-local MAXSP = 8 -- Maxspeed in nodes per second
+local ACDC = 0.3 -- Acceleration / decelleration
+local MAXSP = 8 -- Maximum speed
 local TURNSP = 0.04 -- Maximum turn speed
 local STEPH = 0.6 -- Stepheight, 0.6 = climb slabs, 1.1 = climb nodes
 
@@ -42,7 +46,7 @@ local car = {
 	collisionbox = {-0.55, -0.5, -0.55, 0.55, 0.5, 0.55},
 	visual = "cube",
 	visual_size = {x=1, y=1},
-	textures = { -- top base side side front back
+	textures = { -- top base rightside leftside front back
 		"mesecar_cartop.png",
 		"mesecar_carbase.png",
 		"mesecar_carside.png",
@@ -69,7 +73,7 @@ function car:on_rightclick(clicker)
 		default.player_set_animation(clicker, "stand" , 30)
 	elseif not self.driver then
 		self.driver = clicker
-		clicker:set_attach(self.object, "", {x = 0, y = 11, z = -3}, {x = 0, y = 0, z = 0})
+		clicker:set_attach(self.object, "", {x = 0, y = 10, z = -2}, {x = 0, y = 0, z = 0})
 		default.player_attached[name] = true
 		minetest.after(0.2, function()
 			default.player_set_animation(clicker, "sit" , 30)
@@ -96,7 +100,6 @@ function car.on_punch(self, puncher, time_from_last_punch, tool_capabilities, di
 	end
 	puncher:set_detach()
 	default.player_attached[puncher:get_player_name()] = false
-
 	self.removed = true
 	-- delay remove to ensure player is detached
 	minetest.after(0.1, function()
@@ -111,30 +114,32 @@ end
 
 function car:on_step(dtime)
 	self.v = get_v(self.object:getvelocity()) * get_sign(self.v)
-	local absv = math.abs(self.v)
 	if self.driver then
 		local ctrl = self.driver:get_player_control()
 		if ctrl.up then
-			self.v = self.v + 0.3
+			self.v = self.v + ACDC
 		elseif ctrl.down then
-			self.v = self.v - 0.3
+			self.v = self.v - ACDC
 		end
+	end
+	if self.v == 0 and self.object:getvelocity().y == 0 then
+		return
+	end
+	local absv = math.abs(self.v)
+	if self.driver then
+		local ctrl = self.driver:get_player_control()
 		local turn
 		local maxturn = (1 + dtime) * TURNSP
 		if absv < 4 then
 			turn = maxturn * absv / 4
 		else
-			turn = maxturn
+			turn = maxturn * (1 - (absv - 4) / 8)
 		end
 		if ctrl.left then
 			self.object:setyaw(self.object:getyaw() + turn)
 		elseif ctrl.right then
 			self.object:setyaw(self.object:getyaw() - turn)
 		end
-	end
-	local velo = self.object:getvelocity()
-	if self.v == 0 and velo.x == 0 and velo.y == 0 and velo.z == 0 then
-		return
 	end
 	local s = get_sign(self.v)
 	self.v = self.v - 0.02 * s
@@ -159,7 +164,7 @@ minetest.register_craftitem("mesecar:mesecar", {
 	description = "Mese Car",
 	inventory_image = "mesecar_carfront.png",
 	wield_image = "mesecar_carfront.png",
-	wield_scale = {x = 2, y = 2, z = 2},
+	wield_scale = {x=2, y=2, z=2},
 	liquids_pointable = true,
 	on_place = function(itemstack, placer, pointed_thing)
 		if pointed_thing.type ~= "node" then
@@ -168,7 +173,7 @@ minetest.register_craftitem("mesecar:mesecar", {
 		if not is_ground(pointed_thing.under) then
 			return
 		end
-		pointed_thing.under.y = pointed_thing.under.y + 2
+		pointed_thing.under.y = pointed_thing.under.y + 1
 		minetest.add_entity(pointed_thing.under, "mesecar:mesecar")
 		if not minetest.setting_getbool("creative_mode") then
 			itemstack:take_item()
