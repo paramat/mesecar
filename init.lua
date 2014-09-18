@@ -1,17 +1,15 @@
--- mesecar 0.3.1 by paramat
+-- mesecar 0.3.2 by paramat
 -- For latest stable Minetest and back to 0.4.10
 -- Depends default
 -- Licenses: code WTFPL, textures CC-BY-SA
 
--- Fix texture sizes, edit textures
--- Tune player attach position
--- Fix on-place postion
--- Reduce turn at high speeds
--- Acceleration parameter
+-- max speed 12 
+-- tune parameters
+-- scale new texture *1.5 and hide big player inside car
 
-local ACDC = 0.3 -- Acceleration / decelleration
-local MAXSP = 8 -- Maximum speed
-local TURNSP = 0.04 -- Maximum turn speed
+local ACDC = 0.2 -- Acceleration / decelleration
+local MAXSP = 12 -- Maximum speed
+local TURNSP = 0.03 -- Maximum turn speed
 local STEPH = 0.6 -- Stepheight, 0.6 = climb slabs, 1.1 = climb nodes
 
 -- Functions
@@ -43,14 +41,14 @@ end
 local car = {
 	physical = true,
 	collide_with_objects = true,
-	collisionbox = {-0.55, -0.5, -0.55, 0.55, 0.5, 0.55},
+	collisionbox = {-0.75, -0.75, -0.75, 0.75, 0.75, 0.75},
 	visual = "cube",
-	visual_size = {x=1, y=1},
+	visual_size = {x=1.5, y=1.5},
 	textures = { -- top base rightside leftside front back
 		"mesecar_cartop.png",
 		"mesecar_carbase.png",
-		"mesecar_carside.png",
-		"mesecar_carside.png",
+		"mesecar_carrightside.png",
+		"mesecar_carleftside.png",
 		"mesecar_carfront.png",
 		"mesecar_carback.png",
 	},
@@ -73,7 +71,7 @@ function car:on_rightclick(clicker)
 		default.player_set_animation(clicker, "stand" , 30)
 	elseif not self.driver then
 		self.driver = clicker
-		clicker:set_attach(self.object, "", {x = 0, y = 10, z = -2}, {x = 0, y = 0, z = 0})
+		clicker:set_attach(self.object, "", {x = 0, y = 3, z = -2}, {x = 0, y = 0, z = 0})
 		default.player_attached[name] = true
 		minetest.after(0.2, function()
 			default.player_set_animation(clicker, "sit" , 30)
@@ -129,11 +127,11 @@ function car:on_step(dtime)
 	if self.driver then
 		local ctrl = self.driver:get_player_control()
 		local turn
-		local maxturn = (1 + dtime) * TURNSP
+		local maxturn = (1 + dtime * 2) * TURNSP
 		if absv < 4 then
 			turn = maxturn * absv / 4
 		else
-			turn = maxturn * (1 - (absv - 4) / 8)
+			turn = maxturn * (1 - (absv - 4) / 16)
 		end
 		if ctrl.left then
 			self.object:setyaw(self.object:getyaw() + turn)
@@ -142,7 +140,7 @@ function car:on_step(dtime)
 		end
 	end
 	local s = get_sign(self.v)
-	self.v = self.v - 0.02 * s
+	self.v = self.v - 0.03 * s
 	if s ~= get_sign(self.v) then
 		self.object:setvelocity({x=0, y=0, z=0})
 		self.v = 0
@@ -173,7 +171,7 @@ minetest.register_craftitem("mesecar:mesecar", {
 		if not is_ground(pointed_thing.under) then
 			return
 		end
-		pointed_thing.under.y = pointed_thing.under.y + 1
+		pointed_thing.under.y = pointed_thing.under.y + 1.25
 		minetest.add_entity(pointed_thing.under, "mesecar:mesecar")
 		if not minetest.setting_getbool("creative_mode") then
 			itemstack:take_item()
