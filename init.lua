@@ -32,7 +32,7 @@ local function get_v(v)
 end
 
 
--- Car entity 1
+-- Skycar
 
 local car1 = {
 	physical = true,
@@ -155,7 +155,7 @@ function car1:on_step(dtime)
 end
 
 
--- Car entity 2
+-- Oerkka
 
 local car2 = {
 	physical = true,
@@ -278,7 +278,7 @@ function car2:on_step(dtime)
 end
 
 
--- Car entity 3
+-- Nyancart
 
 local car3 = {
 	physical = true,
@@ -401,7 +401,7 @@ function car3:on_step(dtime)
 end
 
 
--- Car entity 4
+-- Mesecar
 
 local car4 = {
 	physical = true,
@@ -534,12 +534,14 @@ minetest.register_entity("mesecar:mesecar4", car4)
 
 -- Items
 
-minetest.register_craftitem("mesecar:mesecar1", {
+minetest.register_craftitem("mesecar:mesecar1", { -- Skycar
 	description = "Mese Car 1",
 	inventory_image = "mesecar_car1front.png",
 	wield_image = "mesecar_car1front.png",
 	wield_scale = {x = 2, y = 2, z = 2},
 	liquids_pointable = true,
+	groups = {not_in_creative_inventory=1},
+
 	on_place = function(itemstack, placer, pointed_thing)
 		if pointed_thing.type ~= "node" then
 			return
@@ -557,12 +559,14 @@ minetest.register_craftitem("mesecar:mesecar1", {
 })
 
 
-minetest.register_craftitem("mesecar:mesecar2", {
+minetest.register_craftitem("mesecar:mesecar2", { -- Oerkka
 	description = "Mese Car 2",
 	inventory_image = "mesecar_car2front.png",
 	wield_image = "mesecar_car2front.png",
 	wield_scale = {x = 2, y = 2, z = 2},
 	liquids_pointable = true,
+	groups = {not_in_creative_inventory=1},
+
 	on_place = function(itemstack, placer, pointed_thing)
 		if pointed_thing.type ~= "node" then
 			return
@@ -580,12 +584,14 @@ minetest.register_craftitem("mesecar:mesecar2", {
 })
 
 
-minetest.register_craftitem("mesecar:mesecar3", {
+minetest.register_craftitem("mesecar:mesecar3", { -- Nyancart
 	description = "Mese Car 3",
 	inventory_image = "mesecar_car3front.png",
 	wield_image = "mesecar_car3front.png",
 	wield_scale = {x = 2, y = 2, z = 2},
 	liquids_pointable = true,
+	groups = {not_in_creative_inventory=1},
+
 	on_place = function(itemstack, placer, pointed_thing)
 		if pointed_thing.type ~= "node" then
 			return
@@ -603,12 +609,14 @@ minetest.register_craftitem("mesecar:mesecar3", {
 })
 
 
-minetest.register_craftitem("mesecar:mesecar4", {
+minetest.register_craftitem("mesecar:mesecar4", { -- Mesecar
 	description = "Mese Car 4",
 	inventory_image = "mesecar_car4front.png",
 	wield_image = "mesecar_car4front.png",
 	wield_scale = {x = 2, y = 2, z = 2},
 	liquids_pointable = true,
+	groups = {not_in_creative_inventory=1},
+
 	on_place = function(itemstack, placer, pointed_thing)
 		if pointed_thing.type ~= "node" then
 			return
@@ -623,4 +631,80 @@ minetest.register_craftitem("mesecar:mesecar4", {
 		end
 		return itemstack
 	end,
+})
+
+
+minetest.register_craftitem("mesecar:motor", {
+	description = "Mesecar Motor",
+	inventory_image = "mesecar_motor.png",
+	groups = {not_in_creative_inventory=1},
+})
+
+
+minetest.register_craftitem("mesecar:battery", {
+	description = "Mesecar Battery",
+	inventory_image = "mesecar_battery.png",
+	groups = {not_in_creative_inventory=1},
+})
+
+
+-- Crafting
+
+minetest.register_craft({
+	output = "mesecar:motor",
+	recipe = {
+		{"default:steel_ingot", "default:copper_ingot", "default:steel_ingot"},
+		{"default:copper_ingot", "default:steel_ingot", "default:copper_ingot"},
+		{"default:steel_ingot", "default:copper_ingot", "default:steel_ingot"},
+	},
+})
+
+
+minetest.register_craft({
+	output = "mesecar:battery",
+	recipe = {
+		{"default:steel_ingot", "default:steel_ingot", "default:steel_ingot"},
+		{"default:steel_ingot", "default:mese_block", "default:steel_ingot"},
+		{"default:copper_ingot", "default:copper_ingot", "default:steel_ingot"},
+	},
+})
+
+
+minetest.register_craft({
+	output = "mesecar:mesecar1", -- Skycar
+	recipe = {
+		{"default:steel_ingot", "dye:blue", "default:steel_ingot"},
+		{"default:steel_ingot", "group:wool", "default:glass"},
+		{"mesecar:motor", "mesecar:battery", "mesecar:motor"},
+	},
+})
+
+
+minetest.register_craft({
+	output = "mesecar:mesecar2", -- Oerkka
+	recipe = {
+		{"default:steel_ingot", "dye:magenta", "default:steel_ingot"},
+		{"default:steel_ingot", "group:wool", "default:glass"},
+		{"mesecar:motor", "mesecar:battery", "mesecar:motor"},
+	},
+})
+
+
+minetest.register_craft({
+	output = "mesecar:mesecar3", -- Nyancart
+	recipe = {
+		{"default:steel_ingot", "dye:pink", "default:steel_ingot"},
+		{"default:steel_ingot", "group:wool", "default:glass"},
+		{"mesecar:motor", "mesecar:battery", "mesecar:motor"},
+	},
+})
+
+
+minetest.register_craft({
+	output = "mesecar:mesecar4", -- Mesecar
+	recipe = {
+		{"default:steel_ingot", "dye:yellow", "default:steel_ingot"},
+		{"default:steel_ingot", "group:wool", "default:glass"},
+		{"mesecar:motor", "mesecar:battery", "mesecar:motor"},
+	},
 })
