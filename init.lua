@@ -540,7 +540,6 @@ minetest.register_craftitem("mesecar:mesecar1", { -- Skycar
 	wield_image = "mesecar_car1front.png",
 	wield_scale = {x = 2, y = 2, z = 2},
 	liquids_pointable = true,
-	groups = {not_in_creative_inventory=1},
 
 	on_place = function(itemstack, placer, pointed_thing)
 		if pointed_thing.type ~= "node" then
@@ -565,7 +564,6 @@ minetest.register_craftitem("mesecar:mesecar2", { -- Oerkka
 	wield_image = "mesecar_car2front.png",
 	wield_scale = {x = 2, y = 2, z = 2},
 	liquids_pointable = true,
-	groups = {not_in_creative_inventory=1},
 
 	on_place = function(itemstack, placer, pointed_thing)
 		if pointed_thing.type ~= "node" then
@@ -590,7 +588,6 @@ minetest.register_craftitem("mesecar:mesecar3", { -- Nyancart
 	wield_image = "mesecar_car3front.png",
 	wield_scale = {x = 2, y = 2, z = 2},
 	liquids_pointable = true,
-	groups = {not_in_creative_inventory=1},
 
 	on_place = function(itemstack, placer, pointed_thing)
 		if pointed_thing.type ~= "node" then
@@ -615,7 +612,6 @@ minetest.register_craftitem("mesecar:mesecar4", { -- Mesecar
 	wield_image = "mesecar_car4front.png",
 	wield_scale = {x = 2, y = 2, z = 2},
 	liquids_pointable = true,
-	groups = {not_in_creative_inventory=1},
 
 	on_place = function(itemstack, placer, pointed_thing)
 		if pointed_thing.type ~= "node" then
