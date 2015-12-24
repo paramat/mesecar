@@ -3,7 +3,7 @@ For Minetest 0.4.10 and later
 Depends default
 Licenses: code WTFPL, textures CC BY-SA
 
-4 styles of microcar: skycar, nyancart, mesecar and oerkka.
+4 styles of microcar: car55, oerkka, nyancart and mesecar.
 Will only turn when moving, turn speed reduces near top speed.
 Dual-motor 4 wheel drive update (inspired by Tesla Model S).
 By default will climb slabs but not full blocks, edit STEPH to 1.1 to climb blocks.
@@ -34,7 +34,7 @@ Crafting recipies
 
 
     minetest.register_craft({
-       output = "mesecar:mesecar1", -- Skycar
+       output = "mesecar:mesecar1", -- Car55
        recipe = {
           {"default:steel_ingot", "dye:blue", "default:steel_ingot"},
           {"default:steel_ingot", "group:wool", "default:glass"},

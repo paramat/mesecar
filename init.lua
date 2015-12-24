@@ -32,7 +32,7 @@ local function get_v(v)
 end
 
 
--- Skycar
+-- Car55
 
 local car1 = {
 	physical = true,
@@ -534,7 +534,7 @@ minetest.register_entity("mesecar:mesecar4", car4)
 
 -- Items
 
-minetest.register_craftitem("mesecar:mesecar1", { -- Skycar
+minetest.register_craftitem("mesecar:mesecar1", { -- Car55
 	description = "Mese Car 1",
 	inventory_image = "mesecar_car1front.png",
 	wield_image = "mesecar_car1front.png",
@@ -667,7 +667,7 @@ minetest.register_craft({
 
 
 minetest.register_craft({
-	output = "mesecar:mesecar1", -- Skycar
+	output = "mesecar:mesecar1", -- Car55
 	recipe = {
 		{"default:steel_ingot", "dye:blue", "default:steel_ingot"},
 		{"default:steel_ingot", "group:wool", "default:glass"},
